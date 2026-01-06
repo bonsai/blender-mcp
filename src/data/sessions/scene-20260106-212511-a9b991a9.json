@@ -1,0 +1,22 @@
+{
+  "session_id": "scene-20260106-212511-a9b991a9",
+  "saved_at": "2026-01-06T21:25:11.782772",
+  "data": {
+    "session_id": "scene-20260106-212511-a9b991a9",
+    "created_at": 1767702311.7762523,
+    "last_activity": 1767702311.7762523,
+    "blender": {
+      "connected": false,
+      "host": "127.0.0.1",
+      "port": 9876,
+      "last_heartbeat": 0.0
+    },
+    "state": {
+      "objects": [],
+      "selection": null,
+      "last_command": null,
+      "last_result": null
+    },
+    "command_count": 0
+  }
+}

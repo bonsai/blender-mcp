@@ -1,6 +1,9 @@
-"""Blender integration through the Model Context Protocol."""
+"""
+BlenderMCP V2 - Session Manager 統合版
+Phase 1: Session Manager Integration
+"""
 
-__version__ = "0.1.0"
+from .server import mcp
 
-# Expose key classes and functions for easier imports
-from .server import BlenderConnection, get_blender_connection
+__version__ = "2.0.0-phase1"
+__all__ = ["mcp"]

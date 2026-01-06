@@ -1,0 +1,71 @@
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  BLENDER MCP STARTUP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[INFO] Model: ollama/mcp
+[INFO] Ollama Port: 11434
+[INFO] MCP Server: localhost:9876
+[INFO] Pull Model: Yes
+[INFO] Start MCP: No
+[✓]   Ollama CLI found: C:\Users\dance\AppData\Local\Programs\Ollama\ollama.exe
+[⚠]   A running Ollama service seems to be active. If you want to start a new one, stop the existing service first or run with -Force to continue.
+Continue anyway? [y/N]: y
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 1: PULL MODEL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[INFO] Pulling model 'ollama/mcp' (may take a while)...      
+pulling manifest
+Error: pull model manifest: file does not exist
+[⚠]   ollama pull returned exit code 1 (model may already exist)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 2: START OLLAMA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[INFO] Starting Ollama model 'ollama/mcp'...
+pulling manifest
+Error: pull model manifest: file does not exist
+[✓]   Ollama started (PID: 23444)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 3: HEALTH CHECK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[INFO] Waiting for Ollama on port 11434 (max 30 seconds)...  
+..............................
+[⚠]   Ollama did not respond after 30 seconds (may still be loading)
+[INFO] You can check status with: ollama ps
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 4: MCP SERVER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[INFO] MCP server not started (-StartUv not specified)       
+[INFO] To start it manually: uvx blender-mcp
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STARTUP COMPLETE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Status:
+  Model:        ollama/mcp
+  Ollama Port:  11434
+  MCP Server:   localhost:9876
+  PID File:     C:\Users\dance\blender-mcp\.run\ollama.pid
+
+Next Steps:
+  1. Verify Ollama is running:  ollama ps
+  2. Start Blender and install the addon
+  3. Configure addon to connect to localhost:9876
+  4. Test the connection
+
+Troubleshooting:
+  • Check Ollama status:  ollama ps
+  • Stop all processes:   .\stop.ps1
+  • View MCP logs:        Check the MCP server terminal      
+PS C:\Users\dance\blender-mcp> ollama ps
+NAME    ID    SIZE    PROCESSOR    CONTEXT    UNTIL 
+PS C:\Users\dance\blender-mcp> 

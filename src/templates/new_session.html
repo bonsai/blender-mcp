@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏠 LegoDesigner - 新規セッション</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .header {
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .qr-section {
+            margin: 30px 0;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+        
+        .qr-code {
+            max-width: 300px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .qr-code img {
+            width: 100%;
+            height: auto;
+        }
+        
+        .qr-label {
+            margin-top: 15px;
+            color: #666;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .session-info {
+            margin: 30px 0;
+            padding: 20px;
+            background: #e8f4f8;
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            text-align: left;
+        }
+        
+        .session-info-label {
+            color: #666;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .session-id {
+            color: #333;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            word-break: break-all;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .copy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .copy-btn:hover {
+            background: #5568d3;
+        }
+        
+        .copy-btn.copied {
+            background: #28a745;
+        }
+        
+        .instructions {
+            margin: 30px 0;
+            text-align: left;
+        }
+        
+        .instructions h3 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        .instructions ol {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.8;
+            margin-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .timer {
+            margin-top: 20px;
+            color: #999;
+            font-size: 12px;
+        }
+        
+        .timer-icon {
+            display: inline-block;
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .qr-code {
+                max-width: 250px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🏠</div>
+            <h1>LegoDesigner</h1>
+            <p class="subtitle">新規セッション作成</p>
+        </div>
+        
+        <div class="qr-section">
+            <div class="qr-code">
+                <img id="qr-image" src="{{ qr_code }}" alt="QR Code">
+            </div>
+            <div class="qr-label">
+                📱 このQRコードをスキャンして参加
+            </div>
+        </div>
+        
+        <div class="session-info">
+            <div class="session-info-label">セッションID</div>
+            <div class="session-id" id="session-id-display">{{ session_id }}</div>
+            <button class="copy-btn" onclick="copySessionId()">📋 コピー</button>
+        </div>
+        
+        <div class="instructions">
+            <h3>📖 使い方</h3>
+            <ol>
+                <li>上のQRコードをスマートフォンでスキャン</li>
+                <li>または、セッションIDを共有して入力</li>
+                <li>チャットで「何を作りたい？」と入力</li>
+                <li>AIが3Dモデルを生成</li>
+                <li>STLファイルをダウンロード</li>
+                <li>3Dプリンターで出力！</li>
+            </ol>
+        </div>
+        
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="startChat()">
+                💬 チャットを開始
+            </button>
+            <button class="btn btn-secondary" onclick="newSession()">
+                ➕ 新規セッション
+            </button>
+        </div>
+        
+        <div class="timer">
+            <span class="timer-icon">⏱️</span>
+            このセッションは30日間有効です
+        </div>
+    </div>
+    
+    <script>
+        const sessionId = "{{ session_id }}";
+        
+        function copySessionId() {
+            const text = document.getElementById('session-id-display').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                btn.textContent = '✓ コピーしました';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = '📋 コピー';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+        
+        function startChat() {
+            window.location.href = `/chat/${sessionId}`;
+        }
+        
+        function newSession() {
+            window.location.href = '/new';
+        }
+        
+        // ページロード時にセッション情報を取得
+        window.addEventListener('load', () => {
+            fetch(`/api/session/info/${sessionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        console.log('Session info:', data);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>

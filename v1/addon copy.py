@@ -24,9 +24,9 @@ bl_info = {
     "name": "Blender MCP",
     "author": "BlenderMCP",
     "version": (1, 2),
-    "blender": (3, 0, 0),
+    "blender": (5, 0, 0),
     "location": "View3D > Sidebar > BlenderMCP",
-    "description": "Connect Blender to Claude via MCP",
+    "description": "Connect Blender to an MCP-compatible model (e.g., Ollama local MCP)",
     "category": "Interface",
 }
 
@@ -124,7 +124,7 @@ class BlenderMCPServer:
         print("Server thread stopped")
 
     def _handle_client(self, client):
-        """Handle connected client"""
+        """Handle connected client - keep-alive mode"""
         print("Client handler started")
         client.settimeout(None)  # No timeout
         buffer = b''
@@ -145,29 +145,42 @@ class BlenderMCPServer:
                         buffer = b''
 
                         # Execute command in Blender's main thread
+                        response_holder = {'response': None}
+                        
                         def execute_wrapper():
                             try:
                                 response = self.execute_command(command)
-                                response_json = json.dumps(response)
-                                try:
-                                    client.sendall(response_json.encode('utf-8'))
-                                except:
-                                    print("Failed to send response - client disconnected")
+                                response_holder['response'] = response
                             except Exception as e:
                                 print(f"Error executing command: {str(e)}")
                                 traceback.print_exc()
-                                try:
-                                    error_response = {
-                                        "status": "error",
-                                        "message": str(e)
-                                    }
-                                    client.sendall(json.dumps(error_response).encode('utf-8'))
-                                except:
-                                    pass
+                                response_holder['response'] = {
+                                    "status": "error",
+                                    "message": str(e)
+                                }
                             return None
 
                         # Schedule execution in main thread
                         bpy.app.timers.register(execute_wrapper, first_interval=0.0)
+                        
+                        # Wait for response to be ready
+                        import time
+                        timeout = 5.0
+                        start = time.time()
+                        while response_holder['response'] is None and (time.time() - start) < timeout:
+                            time.sleep(0.01)
+                        
+                        # Send response
+                        if response_holder['response']:
+                            response_json = json.dumps(response_holder['response'])
+                            try:
+                                client.sendall(response_json.encode('utf-8'))
+                            except:
+                                print("Failed to send response - client disconnected")
+                                break
+                        
+                        # Keep connection alive - don't close
+                        
                     except json.JSONDecodeError:
                         # Incomplete data, wait for more
                         pass
@@ -178,6 +191,14 @@ class BlenderMCPServer:
             print(f"Error in client handler: {str(e)}")
         finally:
             try:
+                client.shutdown(socket.SHUT_WR)
+            except:
+                pass
+            try:
+                client.close()
+            except:
+                pass
+            print("Client handler stopped")
                 client.close()
             except:
                 pass
@@ -2362,8 +2383,8 @@ class BLENDERMCP_OT_SetFreeTrialHyper3DAPIKey(bpy.types.Operator):
 # Operator to start the server
 class BLENDERMCP_OT_StartServer(bpy.types.Operator):
     bl_idname = "blendermcp.start_server"
-    bl_label = "Connect to Claude"
-    bl_description = "Start the BlenderMCP server to connect with Claude"
+    bl_label = "Connect to MCP server"
+    bl_description = "Start the BlenderMCP server to connect with your MCP client (e.g., Ollama)"
 
     def execute(self, context):
         scene = context.scene
@@ -2381,8 +2402,8 @@ class BLENDERMCP_OT_StartServer(bpy.types.Operator):
 # Operator to stop the server
 class BLENDERMCP_OT_StopServer(bpy.types.Operator):
     bl_idname = "blendermcp.stop_server"
-    bl_label = "Stop the connection to Claude"
-    bl_description = "Stop the connection to Claude"
+    bl_label = "Stop MCP connection"
+    bl_description = "Stop the MCP connection"
 
     def execute(self, context):
         scene = context.scene
@@ -2524,6 +2545,23 @@ def register():
     bpy.utils.register_class(BLENDERMCP_OT_StopServer)
 
     print("BlenderMCP addon registered")
+    
+    # Auto-start MCP server on addon load
+    def auto_start_server():
+        try:
+            if not hasattr(bpy.types, 'blendermcp_server') or not bpy.types.blendermcp_server:
+                port = bpy.context.scene.blendermcp_port
+                server = BlenderMCPServer(port=port)
+                bpy.types.blendermcp_server = server
+                server.start()
+                bpy.context.scene.blendermcp_server_running = True
+                print(f"[BlenderMCP] Auto-started server on localhost:{port}")
+        except Exception as e:
+            print(f"[BlenderMCP] Error auto-starting server: {e}")
+        return None
+    
+    # Schedule auto-start for next frame
+    bpy.app.timers.register(auto_start_server)
 
 def unregister():
     # Stop the server if it's running

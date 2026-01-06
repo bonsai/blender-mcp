@@ -1,0 +1,23 @@
+# Flask Web Server - LegoDesigner V3
+
+# Web Framework
+Flask==2.3.3
+Flask-CORS==4.0.0
+Flask-Session==0.5.0
+
+# QR Code Generation
+qrcode==7.4.2
+Pillow==10.0.0
+
+# Data Processing
+python-dotenv==1.0.0
+
+# Development
+pytest==7.4.0
+pytest-cov==4.1.0
+black==23.9.1
+flake8==6.0.0
+pylint==2.17.5
+
+# Production
+gunicorn==21.2.0

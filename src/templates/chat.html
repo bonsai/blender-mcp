@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏠 LegoDesigner - チャット</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo {
+            font-size: 24px;
+        }
+        
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .header-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .session-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .btn-icon {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        
+        .btn-icon:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        main {
+            flex: 1;
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            overflow: hidden;
+        }
+        
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .message {
+            display: flex;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message.user {
+            justify-content: flex-end;
+        }
+        
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            word-wrap: break-word;
+        }
+        
+        .message.user .message-content {
+            background: #667eea;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .message.assistant .message-content {
+            background: #f0f0f0;
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .message-time {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+        
+        .input-area {
+            padding: 15px 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            background: white;
+        }
+        
+        .input-group {
+            flex: 1;
+            display: flex;
+            gap: 10px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            border-color: #667eea;
+        }
+        
+        .btn-send {
+            background: #667eea;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-send:hover {
+            background: #5568d3;
+        }
+        
+        .btn-send:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .preview-container {
+            width: 350px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .preview-header {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .preview-content {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .preview-item {
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .preview-item:hover {
+            background: #e8ecf1;
+            transform: translateX(5px);
+        }
+        
+        .preview-item-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 13px;
+        }
+        
+        .preview-item-time {
+            font-size: 11px;
+            color: #999;
+            margin-top: 5px;
+        }
+        
+        .preview-actions {
+            padding: 15px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-action {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-download {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-download:hover {
+            background: #218838;
+        }
+        
+        .btn-order {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .btn-order:hover {
+            background: #e0a800;
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #667eea;
+            font-size: 14px;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 1024px) {
+            main {
+                flex-direction: column;
+            }
+            
+            .preview-container {
+                width: 100%;
+                max-height: 200px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .preview-container {
+                display: none;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <div class="logo">🏠</div>
+            <div class="header-title">LegoDesigner</div>
+        </div>
+        <div class="header-right">
+            <div class="session-badge" id="session-badge">
+                Session: <span id="session-id-short">{{ session_id[:12] }}</span>
+            </div>
+            <button class="btn-icon" onclick="showQRCode()" title="QRコード表示">
+                📱
+            </button>
+            <button class="btn-icon" onclick="newSession()" title="新規セッション">
+                ➕
+            </button>
+        </div>
+    </header>
+    
+    <main>
+        <div class="chat-container">
+            <div class="messages" id="messages">
+                <div class="message assistant">
+                    <div>
+                        <div class="message-content">
+                            👋 こんにちは！何を作りたい？
+                        </div>
+                        <div class="message-time">今</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="message-input" 
+                        placeholder="例: 赤いレゴの家を作って"
+                        onkeypress="handleKeyPress(event)"
+                    >
+                    <button class="btn-send" id="send-btn" onclick="sendMessage()">
+                        ➤
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="preview-container">
+            <div class="preview-header">
+                📦 作成したモデル
+            </div>
+            <div class="preview-content" id="preview-list">
+                <div style="color: #999; text-align: center; padding: 20px;">
+                    モデルがまだありません
+                </div>
+            </div>
+            <div class="preview-actions">
+                <button class="btn-action btn-download" onclick="downloadModel()">
+                    📥 ダウンロード
+                </button>
+                <button class="btn-action btn-order" onclick="orderModel()">
+                    💳 発注する
+                </button>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        const sessionId = "{{ session_id }}";
+        let selectedModel = null;
+        
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // ユーザーメッセージを表示
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // API に送信
+            fetch(`/api/chat/send`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    message: message
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // アシスタント応答を表示（シミュレーション）
+                    setTimeout(() => {
+                        addMessage('🤔 処理中...', 'assistant');
+                    }, 500);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                addMessage('❌ エラーが発生しました', 'assistant');
+            });
+        }
+        
+        function addMessage(content, role) {
+            const messagesDiv = document.getElementById('messages');
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${role}`;
+            
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('ja-JP', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            messageEl.innerHTML = `
+                <div>
+                    <div class="message-content">${escapeHtml(content)}</div>
+                    <div class="message-time">${timeStr}</div>
+                </div>
+            `;
+            
+            messagesDiv.appendChild(messageEl);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+        
+        function showQRCode() {
+            fetch(`/api/session/qr/${sessionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('QRコード:\n' + data.qr_code);
+                    }
+                });
+        }
+        
+        function newSession() {
+            window.location.href = '/new';
+        }
+        
+        function downloadModel() {
+            if (!selectedModel) {
+                alert('モデルを選択してください');
+                return;
+            }
+            alert('ダウンロード機能は実装予定です');
+        }
+        
+        function orderModel() {
+            if (!selectedModel) {
+                alert('モデルを選択してください');
+                return;
+            }
+            window.location.href = `/order/${sessionId}`;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // ページロード時にチャット履歴を取得
+        window.addEventListener('load', () => {
+            fetch(`/api/chat/history/${sessionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success' && data.messages.length > 0) {
+                        // 履歴を表示
+                        console.log('Chat history:', data.messages);
+                    }
+                });
+        });
+    </script>
+</body>
+</html>

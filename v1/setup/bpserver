@@ -1,0 +1,94 @@
+import bpy
+import socket
+import threading
+import queue
+import json
+
+# Task queue for Blender main thread
+task_queue = queue.Queue()
+
+def blender_tick():
+    """Called by Blender timer - executes tasks in main thread"""
+    try:
+        while not task_queue.empty():
+            fn = task_queue.get_nowait()
+            fn()
+    except queue.Empty:
+        pass
+    return 0.1
+
+# Register timer
+bpy.app.timers.register(blender_tick)
+
+def handle_client(conn, addr):
+    """Handle a single client connection"""
+    print(f"[MCP] Client connected: {addr}")
+    try:
+        while True:
+            data = conn.recv(4096)
+            if not data:
+                break
+            
+            print(f"[MCP] Received: {data}")
+            
+            try:
+                cmd = json.loads(data.decode('utf-8'))
+                cmd_type = cmd.get('type', '')
+                
+                if cmd_type == 'create_cube':
+                    # Queue the cube creation for main thread
+                    task_queue.put(lambda: bpy.ops.mesh.primitive_cube_add(size=2, location=(0, 0, 0)))
+                    response = {"status": "success", "message": "cube created"}
+                
+                elif cmd_type == 'get_scene_info':
+                    # Queue scene info retrieval
+                    def get_info():
+                        scene = bpy.context.scene
+                        return {
+                            "status": "success",
+                            "scene": scene.name,
+                            "objects": len(scene.objects)
+                        }
+                    task_queue.put(get_info)
+                    response = {"status": "success", "message": "scene info queued"}
+                
+                else:
+                    response = {"status": "error", "message": f"Unknown command: {cmd_type}"}
+                
+                conn.send(json.dumps(response).encode('utf-8'))
+            
+            except json.JSONDecodeError:
+                response = {"status": "error", "message": "Invalid JSON"}
+                conn.send(json.dumps(response).encode('utf-8'))
+    
+    except Exception as e:
+        print(f"[MCP] Error: {e}")
+    finally:
+        conn.close()
+        print(f"[MCP] Client disconnected: {addr}")
+
+def start_mcp_server():
+    """Start MCP server in background thread"""
+    def server_loop():
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind(("127.0.0.1", 9876))
+        s.listen(5)
+        print("[MCP] Server listening on localhost:9876")
+        
+        while True:
+            try:
+                conn, addr = s.accept()
+                client_thread = threading.Thread(target=handle_client, args=(conn, addr), daemon=True)
+                client_thread.start()
+            except Exception as e:
+                print(f"[MCP] Server error: {e}")
+                break
+    
+    server_thread = threading.Thread(target=server_loop, daemon=True)
+    server_thread.start()
+    print("[MCP] Server thread started")
+
+# Start the server
+start_mcp_server()
+print("[MCP] ✓ MCP server initialized")

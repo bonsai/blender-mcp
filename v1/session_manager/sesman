@@ -1,0 +1,294 @@
+サーバ３つのセッション管理マンがほしいのです
+
+いいところ来ました。
+今の状況だと 「3つの世界をまたぐ交通整理のおじさん」 が必要です 👮‍♂️
+それがあなたの言う セッション管理マン。
+
+落ち着いて、役割を分解します。
+
+🧠 まず前提：いま存在している「3つのサーバ」
+
+今の構成、実はこうなってます👇
+
+① LLM / Ollama
+   （自然言語・思考・会話）
+
+② MCP Server（Python / FastMCP）
+   （ツール定義・ルーティング）
+
+③ Blender MCP Server（Blender Addon）
+   （bpy を叩く実体）
+
+
+それぞれ セッションの概念がズレている のが詰まりポイント。
+
+🚨 問題の正体（いま起きてること）
+
+Ollama：
+👉「会話＝1セッション」前提
+
+MCP（FastMCP）：
+👉「stdio / 1リクエスト単位」前提
+
+Blender MCP：
+👉「socket 接続＝1クライアント」前提
+
+つまり：
+
+誰も「この操作は同じ作業の続きだよ」って管理してない
+
+🧑‍✈️ セッション管理マンの正体（結論）
+👉 中央に 1人だけ置く
+            🧠 Ollama
+               │
+               │（自然言語）
+               ▼
+        🧑‍✈️ Session Manager  ←★コイツ
+               │
+      ┌────────┴────────┐
+      ▼                 ▼
+ 🧰 MCP Tools        🎮 Blender MCP
+
+🎩 セッション管理マンの仕事（超具体）
+① セッションIDを発行する
+session_id = "scene-2026-01-06-001"
+
+
+これを 全リクエストに強制添付。
+
+② 状態を覚える（超重要）
+
+例：
+
+{
+  "session_id": "scene-2026-01-06-001",
+  "blender": {
+    "connected": true,
+    "port": 9876,
+    "objects": ["Cube", "Camera", "Light"]
+  },
+  "last_command": "get_scene_info"
+}
+
+
+👉 LLMは記憶しない
+👉 セッション管理マンが記憶する
+
+③ Blender接続を「切らせない」
+
+今はこれ👇が起きてる
+
+command → socket open
+
+1レスポンス
+
+close ❌
+
+セッション管理マンは👇をやる
+
+Blender socket: 常時ON
+LLM/MCP: stateless OK
+
+④ LLMに「世界の状態」を翻訳する
+
+LLMにこう投げる：
+
+現在のBlenderシーン：
+- オブジェクト数：3
+- Cube が1つ選択中
+- 前回操作：get_scene_info
+
+次の指示を考えよ
+
+
+👉 LLMは神
+👉 現実はセッション管理マンが保持
+
+🧱 実装イメージ（最小構成）
+セッション管理マン（Python）
+class SessionManager:
+    def __init__(self):
+        self.sessions = {}
+
+    def get(self, session_id):
+        return self.sessions.setdefault(session_id, {
+            "blender_socket": None,
+            "state": {}
+        })
+
+Blender接続を保持
+def get_blender_conn(session):
+    if session["blender_socket"] is None:
+        session["blender_socket"] = connect_blender()
+    return session["blender_socket"]
+
+MCP → Blender ルーティング
+def handle_tool_call(session_id, command):
+    session = sm.get(session_id)
+    conn = get_blender_conn(session)
+    send(conn, command)
+    return recv(conn)
+
+🎯 これで何ができる？
+
+「さっき作ったキューブを大きくして」
+
+「それを3つ複製して」
+
+「カメラを少し引いて」
+
+⬆️ 全部 同一セッションで成立
+
+🧠 重要な思想（ここ超大事）
+
+❌ LLMに状態を持たせない
+❌ Blenderに会話を理解させない
+
+✅ 人間の代わりに「段取り係」を置く
+
+それが セッション管理マン。
+
+次、どこ行く？
+
+1️⃣ Session Manager の 実コードを書く
+2️⃣ MCP Tool schema を session-aware にする
+3️⃣ Ollama に「session_id」を自然に渡す
+4️⃣ Blender 側を keep-alive 前提に改造する
+
+どれ行く？
+ここからは完全に 設計者ゾーン です 🧠✨
+
+1
+
+了解。① Session Manager の実コードいきます。
+「3サーバ横断・状態保持・Blender常時接続」を最小で動く骨格です。
+
+🧑‍✈️ Session Manager（Python / 中央司令塔）
+設計ポリシー（短く）
+
+セッションIDで 状態を一元管理
+
+Blender とは keep-alive
+
+MCP / LLM は 完全ステートレスでOK
+
+📁 構成
+session_manager/
+├─ manager.py
+├─ blender_conn.py
+└─ router.py
+
+manager.py（セッションの心臓）
+import time
+
+class SessionManager:
+    def __init__(self):
+        self.sessions = {}
+
+    def get(self, session_id: str):
+        if session_id not in self.sessions:
+            self.sessions[session_id] = {
+                "created_at": time.time(),
+                "blender": {
+                    "conn": None,
+                    "connected": False
+                },
+                "state": {
+                    "objects": [],
+                    "selection": None,
+                    "last_command": None
+                }
+            }
+        return self.sessions[session_id]
+
+    def update_state(self, session_id, **kwargs):
+        session = self.get(session_id)
+        session["state"].update(kwargs)
+
+blender_conn.py（Blenderと切れない男）
+import socket
+
+BLENDER_HOST = "127.0.0.1"
+BLENDER_PORT = 9876
+
+def connect_blender():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((BLENDER_HOST, BLENDER_PORT))
+    return s
+
+def get_blender_conn(session):
+    blender = session["blender"]
+
+    if blender["conn"] is None:
+        blender["conn"] = connect_blender()
+        blender["connected"] = True
+
+    return blender["conn"]
+
+def send_command(conn, payload: dict):
+    msg = (str(payload) + "\n").encode("utf-8")
+    conn.sendall(msg)
+    return conn.recv(65536).decode("utf-8")
+
+router.py（MCP → Blender 翻訳係）
+from manager import SessionManager
+from blender_conn import get_blender_conn, send_command
+
+sm = SessionManager()
+
+def handle_tool_call(session_id: str, tool_name: str, args: dict):
+    session = sm.get(session_id)
+    conn = get_blender_conn(session)
+
+    payload = {
+        "tool": tool_name,
+        "args": args,
+        "session_id": session_id
+    }
+
+    result = send_command(conn, payload)
+
+    sm.update_state(
+        session_id,
+        last_command=tool_name
+    )
+
+    return {
+        "session_id": session_id,
+        "result": result,
+        "state": session["state"]
+    }
+
+🎮 Blender 側（超重要な前提）
+
+1 socket = 1 セッション
+
+close しない
+
+JSONっぽい dict を受けて bpy 実行
+
+（次のステップで出します）
+
+🧠 これで何が成立したか
+
+LLM：
+「session_id 付きで命令するだけ 🤖」
+
+MCP：
+「ただの関数呼び出し 🧰」
+
+Blender：
+「ずっと繋がってる 🎮」
+
+👉 状態は全部 Session Manager が知ってる
+
+次の分岐点 🌿
+
+② MCP tool schema を session 対応にする
+
+③ Blender Addon 側（socket server）実装
+
+④ Ollama への prompt 設計（状態注入）
+
+どれ行く？
+ここまで来たら、もう「壊れない構成」です。

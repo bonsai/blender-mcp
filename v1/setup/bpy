@@ -1,0 +1,20 @@
+import bpy
+
+# addon.py から BlenderMCPServer クラスを取得
+# (addon.py は既に読み込まれている)
+
+# グローバルスコープから取得
+import sys
+addon_module = sys.modules.get('blender_mcp')
+
+if addon_module and hasattr(addon_module, 'BlenderMCPServer'):
+    BlenderMCPServer = addon_module.BlenderMCPServer
+    port = bpy.context.scene.blendermcp_port
+    server = BlenderMCPServer(port=port)
+    bpy.types.blendermcp_server = server
+    server.start()
+    bpy.context.scene.blendermcp_server_running = True
+    print(f"✓ Server started on localhost:{port}")
+else:
+    print("✗ Could not find BlenderMCPServer")
+    print(f"Available modules: {list(sys.modules.keys())[:10]}")

@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-01-06T21:25:11.801954",
+  "session_id": "scene-20260106-212511-7844b558",
+  "state": {
+    "objects": [
+      "Cube",
+      "Light",
+      "Camera"
+    ],
+    "selection": "Cube",
+    "last_command": null
+  }
+}

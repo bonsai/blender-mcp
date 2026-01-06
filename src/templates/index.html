@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blender MCP - Home</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border-left: 4px solid #00d4ff;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
+
+        .nav-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+            border-color: #00d4ff;
+        }
+
+        .nav-card-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .nav-card-title {
+            font-size: 1.5em;
+            color: #00d4ff;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .nav-card-description {
+            color: #888;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .nav-card a {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            height: 100%;
+        }
+
+        .status-bar {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-item {
+            text-align: center;
+        }
+
+        .status-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .status-label {
+            font-size: 0.9em;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 8px;
+        }
+
+        .status-indicator.active {
+            background: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        .status-indicator.inactive {
+            background: #ff4444;
+            box-shadow: 0 0 10px #ff4444;
+        }
+
+        @media (max-width: 768px) {
+            .nav-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .status-bar {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Blender MCP</h1>
+            <p class="subtitle">Model Context Protocol for Blender Integration</p>
+            <p class="subtitle">UI → Client → MCP Server → Blender</p>
+        </header>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-value" id="serverStatus">
+                    <span class="status-indicator active"></span>
+                    Online
+                </div>
+                <div class="status-label">Server Status</div>
+            </div>
+            <div class="status-item">
+                <div class="status-value" id="activeSessionsCount">0</div>
+                <div class="status-label">Active Sessions</div>
+            </div>
+            <div class="status-item">
+                <div class="status-value" id="totalRequestsCount">0</div>
+                <div class="status-label">Total Requests</div>
+            </div>
+        </div>
+
+        <div class="nav-grid">
+            <div class="nav-card">
+                <a href="/new">
+                    <div class="nav-card-icon">🆕</div>
+                    <div class="nav-card-title">New Session</div>
+                    <div class="nav-card-description">
+                        新しいセッションを作成して、QRコードでアクセス可能にします
+                    </div>
+                </a>
+            </div>
+
+            <div class="nav-card">
+                <a href="/status">
+                    <div class="nav-card-icon">📊</div>
+                    <div class="nav-card-title">Server Status</div>
+                    <div class="nav-card-description">
+                        リアルタイム通信ログ、アクティブポート、MCP コマンド実行
+                    </div>
+                </a>
+            </div>
+
+            <div class="nav-card" onclick="showSessionJoin()">
+                <div class="nav-card-icon">🔗</div>
+                <div class="nav-card-title">Join Session</div>
+                <div class="nav-card-description">
+                    既存のセッションIDを入力して参加
+                </div>
+            </div>
+
+            <div class="nav-card">
+                <a href="/api/health">
+                    <div class="nav-card-icon">🏥</div>
+                    <div class="nav-card-title">Health Check</div>
+                    <div class="nav-card-description">
+                        API ヘルスチェック（JSON レスポンス）
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Join Modal -->
+    <div id="sessionJoinModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #2d2d44; padding: 30px; border-radius: 15px; border: 1px solid #00d4ff;">
+            <h3 style="color: #00d4ff; margin-bottom: 20px;">Join Existing Session</h3>
+            <input type="text" id="sessionIdInput" placeholder="Enter Session ID..." style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #00d4ff; border-radius: 5px; color: #e0e0e0; margin-bottom: 15px;">
+            <div style="display: flex; gap: 10px;">
+                <button onclick="joinSession()" style="flex: 1; padding: 10px; background: rgba(0, 212, 255, 0.2); border: 1px solid #00d4ff; color: #00d4ff; border-radius: 5px; cursor: pointer;">Join</button>
+                <button onclick="closeSessionJoin()" style="flex: 1; padding: 10px; background: rgba(255, 68, 68, 0.2); border: 1px solid #ff4444; color: #ff4444; border-radius: 5px; cursor: pointer;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ステータス更新
+        async function updateStatus() {
+            try {
+                const response = await fetch('/api/server-status');
+                const data = await response.json();
+                
+                document.getElementById('activeSessionsCount').textContent = data.active_sessions;
+                
+                // 総リクエスト数を計算
+                let totalRequests = 0;
+                data.sessions.forEach(session => {
+                    totalRequests += session.log_count;
+                });
+                document.getElementById('totalRequestsCount').textContent = totalRequests;
+                
+            } catch (error) {
+                console.error('Error fetching status:', error);
+                document.getElementById('serverStatus').innerHTML = '<span class="status-indicator inactive"></span>Offline';
+            }
+        }
+
+        function showSessionJoin() {
+            document.getElementById('sessionJoinModal').style.display = 'block';
+        }
+
+        function closeSessionJoin() {
+            document.getElementById('sessionJoinModal').style.display = 'none';
+            document.getElementById('sessionIdInput').value = '';
+        }
+
+        function joinSession() {
+            const sessionId = document.getElementById('sessionIdInput').value.trim();
+            if (sessionId) {
+                window.location.href = `/join/${sessionId}`;
+            } else {
+                alert('Please enter a session ID');
+            }
+        }
+
+        // ESC キーでモーダルを閉じる
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeSessionJoin();
+            }
+        });
+
+        // 定期的にステータスを更新
+        setInterval(updateStatus, 2000);
+        updateStatus();
+    </script>
+</body>
+</html>

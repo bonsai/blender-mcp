@@ -1,0 +1,15 @@
+import bpy
+import sys
+
+addon = sys.modules.get('addon')
+BlenderMCPServer = getattr(addon, 'BlenderMCPServer', None)
+
+if BlenderMCPServer:
+    port = bpy.context.scene.blendermcp_port
+    server = BlenderMCPServer(port=port)
+    bpy.types.blendermcp_server = server
+    server.start()
+    bpy.context.scene.blendermcp_server_running = True
+    print(f"✓ Server started on localhost:{port}")
+else:
+    print("✗ BlenderMCPServer not found")
